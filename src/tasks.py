@@ -2,10 +2,13 @@
 
 """Implements task management functionality"""
 
+from actions import ActionBase
+
+
 class TasksManager:
     def __init__(self) -> None:
         pass
 
-    def execute(self, action: str, args: list[str]):
+    def execute(self, action: ActionBase):
         pass
 

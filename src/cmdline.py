@@ -4,11 +4,7 @@
 
 from actions import *
 
-class Parameters:
-    action = ActionBase()
-    args: list[str] = []
-
-def get_params(args: list[str]):
+def get_action(args: list[str]):
     return None
 
 def _get_action_names():

@@ -13,18 +13,18 @@ __email__ = "dennisfrancis.in@gmail.com"
 
 
 import sys
-from cmdline import get_params, show_usage
+from cmdline import get_action, show_usage
 from tasks import TasksManager
 
 
 def main():
-    params = get_params(sys.argv)
-    if params is None:
+    action = get_action(sys.argv)
+    if action is None:
         show_usage()
         sys.exit(1)
 
     tm = TasksManager()
-    tm.execute(action=params.action, args=params.args)
+    tm.execute(action=action)
 
 
 if __name__ == "__main__":

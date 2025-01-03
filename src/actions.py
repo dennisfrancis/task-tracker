@@ -3,7 +3,7 @@
 from enum import Enum
 from status import Status, get_status_from_str, get_status_names
 from typing import override
-from format import fmt_list_of_strings
+from formatting import fmt_list_of_strings
 
 program_name = 'task-tracker.py'
 

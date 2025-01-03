@@ -18,7 +18,7 @@ from tasks import TasksManager
 
 
 def main():
-    action = get_action(sys.argv)
+    action = get_action(sys.argv, show_help=True)
     if action is None:
         show_usage()
         sys.exit(1)

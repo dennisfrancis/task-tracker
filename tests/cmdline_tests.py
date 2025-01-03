@@ -135,17 +135,17 @@ class TestListParser(unittest.TestCase):
 
     def test_list_one_arg_todo(self):
         action = get_action([program_name, "list", "todo"])
-        self.assertIsInstance(action, ActionList, "must return an instance of ActionDelete")
+        self.assertIsInstance(action, ActionList, "must return an instance of ActionList")
         self.assertEqual(action.status, Status.TODO, "incorrect status parsed")
 
     def test_list_one_arg_in_progress(self):
         action = get_action([program_name, "list", "in_progress"])
-        self.assertIsInstance(action, ActionList, "must return an instance of ActionDelete")
+        self.assertIsInstance(action, ActionList, "must return an instance of ActionList")
         self.assertEqual(action.status, Status.IN_PROGRESS, "incorrect status parsed")
 
     def test_list_one_arg_done(self):
         action = get_action([program_name, "list", "done"])
-        self.assertIsInstance(action, ActionList, "must return an instance of ActionDelete")
+        self.assertIsInstance(action, ActionList, "must return an instance of ActionList")
         self.assertEqual(action.status, Status.DONE, "incorrect status parsed")
 
 

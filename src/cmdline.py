@@ -2,6 +2,7 @@
 
 """Utilities to parse command-line arguments and show usage"""
 
+from format import fmt_list_of_strings
 from actions import *
 
 _action_map = {
@@ -28,6 +29,6 @@ def _get_action_names():
 
 def show_usage():
     print("\nGeneral Usage: task-tracker <action> <action-arguments...>")
-    print("\nWhere action can be one of {}".format(_get_action_names()))
+    print("\nWhere action can be one of {}".format(fmt_list_of_strings(_get_action_names())))
     return
 

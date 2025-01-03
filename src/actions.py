@@ -3,6 +3,7 @@
 from enum import Enum
 from status import Status, get_status_from_str, get_status_names
 from typing import override
+from format import fmt_list_of_strings
 
 program_name = 'task-tracker.py'
 
@@ -98,7 +99,7 @@ class ActionList(ActionBase):
     @override
     def help(self):
         print("Subcommand usage:\n{} list [status]".format(program_name))
-        print("Where status is one of {}".format(get_status_names()))
+        print("Where status is one of {}".format(fmt_list_of_strings(get_status_names())))
 
 
 class ActionMark(ActionBase):
@@ -124,5 +125,5 @@ class ActionMark(ActionBase):
     @override
     def help(self):
         print("Subcommand usage:\n{} mark <task_id:integer> <status>".format(program_name))
-        print("Where status is one of {}".format(get_status_names()))
+        print("Where status is one of {}".format(fmt_list_of_strings(get_status_names())))
 

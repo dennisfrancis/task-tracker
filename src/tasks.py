@@ -7,10 +7,17 @@ from datetime import datetime, timezone
 import json
 from pathlib import Path
 from typing import override, Any, cast
+
 from actions import *
 from status import Status, status_map
 
 class Task:
+    """
+    Task represents a single task with id(tid), a short
+    description(description), its status and two datetime fields to represent
+    when it was created and when it was updated last both in UTC timezone.
+    """
+
     tid = -1
     description = ""
     status = Status.UNKNOWN
@@ -18,6 +25,10 @@ class Task:
     updated_at = datetime(1970, 1, 1, 0, 0, 0, tzinfo=timezone.utc)
 
     def __lt__(self, other):
+        """
+        When sorting a list of tasks, order by status. For tasks of same
+        status, order by last updated time in descending order.
+        """
         if self.status.value < other.status.value:
             return True
         if self.status.value > other.status.value:
@@ -27,11 +38,18 @@ class Task:
         return True
 
 class TaskEncoder(json.JSONEncoder):
+    """
+    A custom JSON encoder for Task instances. The status is represented by
+    lower case strings. The created_at and updated_at datetimes are represented
+    as timestamps. Task is represented as a dictionary with a special key value
+    pair of <"__class__" : "Task"> as a cue to the decoder (TaskDecoder).
+    """
     @override
     def default(self, o):
         if not isinstance(o, Task):
             return super().default(o)
-        return {"__class__": "Task",
+        return {
+                "__class__": "Task",
                 "tid" : o.tid,
                 "description" : o.description,
                 "status" : o.status.name.lower(),
@@ -39,6 +57,11 @@ class TaskEncoder(json.JSONEncoder):
                 "updated_at": str(o.updated_at.timestamp()) }
 
 class TaskDecoder(json.JSONDecoder):
+    """
+    A custom JSON decoder for importing Task instances from JSON. This reverses
+    the convertions done in TaskEncoder to read dictionaries representing a
+    task to a Task instance.
+    """
     def __init__(self):
         json.JSONDecoder.__init__(self, object_hook=TaskDecoder.from_dict)
 
@@ -55,12 +78,29 @@ class TaskDecoder(json.JSONDecoder):
         return task
 
 class TaskStore:
-    error = False
+    """
+    TaskStore is an abstraction that handles the underlying JSON file
+    read/write operations while providing the api for adding a new task,
+    updating a task, deleting a task, marking a task and listing all existing
+    tasks or those with of a specific status.
+    """
+
+    error = False #  To indicate one or more errors occured.
+
+    # In-memory representation of list of Tasks.
+    # "next_tid" holds the value of "task id" for the next Task to be added.
     _store: dict[int | str, Any] = { "next_tid" : 1 }
+
     def __init__(self, store_fname: str) -> None:
+        """
+        Builds a TaskStore instance from the given file path of the underlying
+        JSON data file. If the file does not exist, it is created.
+        """
+
         self.file = store_fname
         if not Path(self.file).is_file():
             self._write()
+
         try:
             with open(self.file, "r") as fp:
                 self._load(fp)
@@ -69,9 +109,19 @@ class TaskStore:
             self.error = True
 
     def _load(self, fp):
+        """
+        Imports tasks from the JSON data file to be held in memory making use
+        of the custom JSON decoder(TaskDecoder).
+        """
+
         self._store = json.load(fp, cls=TaskDecoder)
 
     def _write(self):
+        """
+        Exports the tasks data from the in memory representation in self._store
+        to the JSON file making use of the custom JSON encoder(TaskEncoder).
+        """
+
         try:
             with open(self.file, "w") as fp:
                 json.dump(self._store, fp, cls=TaskEncoder)
@@ -80,18 +130,33 @@ class TaskStore:
             self.error = True
 
     def _next_tid(self) -> int:
+        """
+        Helper method to provide a "task id" for the next task. This also
+        increments the internal counter in the in memory store.
+        """
+
         next_tid = self._store["next_tid"]
         self._store["next_tid"] += 1
         return next_tid
 
     def _get_task(self, tid: int) -> Task | None:
+        """
+        Helper method to get a Task instance corresponding to a task-id from
+        the in-memory store.
+        """
+
         stid = str(tid)
         if stid not in self._store:
             return None
         return self._store[stid]
 
     def add(self, action: ActionAdd):
-        assert action.valid
+        """
+        Adds a new task with description specified by action(ActionAdd
+        instance) to the in-memory data store and finally writes everything
+        to JSON file.
+        """
+
         next_tid = self._next_tid()
         task = Task()
         task.tid = next_tid
@@ -106,6 +171,12 @@ class TaskStore:
             print("Added new task with id = {}".format(next_tid))
 
     def update(self, action: ActionUpdate):
+        """
+        Updates the description of a task in the in-memory store for a given
+        task-id specified by the "action" parameter. The in-memory store is
+        serialized to JSON in the end.
+        """
+
         task = self._get_task(action.task_id)
         if task is None:
             print("[ERROR] There is no task with task_id = {}".format(action.task_id))
@@ -118,6 +189,11 @@ class TaskStore:
             print("Updated task with id = {}".format(action.task_id))
 
     def delete(self, action: ActionDelete):
+        """
+        Deletes a task specified by the action parameter from the in-memory
+        store and finally the JSON file is re-written.
+        """
+
         stid = str(action.task_id)
         if stid not in self._store:
             print("[ERROR] There is no task with task_id = {}".format(action.task_id))
@@ -128,6 +204,11 @@ class TaskStore:
             print("Deleted task with id = {}".format(action.task_id))
 
     def list(self, action: ActionList):
+        """
+        Lists the all existing tasks or those with a status specified by the
+        action parameter.
+        """
+
         tasks = (task for key, task in self._store.items() if hasattr(task, "tid"))
         if action.status != Status.UNKNOWN:
             tasks = (task for task in tasks if task.status == action.status)
@@ -144,6 +225,10 @@ class TaskStore:
                   format(task.tid, desc, task.status.name.lower(), task.updated_at.astimezone().strftime("%d %b %Y %H:%M:%S")))
 
     def mark(self, action: ActionMark):
+        """
+        Changes the status of a task as specified by the action parameter and the JSON file is updated.
+        """
+
         task = self._get_task(action.task_id)
         if task is None:
             print("[ERROR] There is no task with task_id = {}".format(action.task_id))
@@ -155,9 +240,20 @@ class TaskStore:
         if not self.error:
             print("Marked task with id = {} as {}".format(action.task_id, action.new_status.name.lower()))
 
+
 class TasksManager:
-    error = False
+    """
+    Executes the sub-commands from CLI by forwarding the actions to TaskStore
+    API.
+    """
+
+    error = False # To store the error status of one of the store or file operations.
     def __init__(self, data_fname : str | None = None) -> None:
+        """
+        Creates an instance of TaskStore from the default or specified JSON
+        file.
+        """
+
         if data_fname is None:
             try:
                 self.file = self._default_data_fname()
@@ -174,6 +270,10 @@ class TasksManager:
             self.error = True
 
     def _default_data_fname(self) -> Path:
+        """
+        Helper method that returns the default JSON file location.
+        """
+
         folder = self._data_dir()
         if not folder.is_dir():
             folder.mkdir(parents=True)
@@ -188,7 +288,7 @@ class TasksManager:
         # macOS: ~/Library/Application Support
         # windows: C:/Users/<USER>/AppData/Roaming
 
-        https://stackoverflow.com/a/61901696
+        Adapted from: https://stackoverflow.com/a/61901696
         """
 
         home = Path.home()
@@ -201,6 +301,11 @@ class TasksManager:
             return home / "Library/Application Support" / dir_name
 
     def execute(self, action: ActionBase):
+        """
+        Forwards the action parameter to the TaskStore instance's
+        corresponding API method.
+        """
+
         if self.error:
             print("[ERROR] Cannot continue due to previous error(s)")
             return

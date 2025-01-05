@@ -1,1 +1,4 @@
 __pycache__
+/build/
+/dist/
+/src/tasktracker.egg-info/

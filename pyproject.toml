@@ -17,6 +17,9 @@ classifiers = [
     "Operating System :: OS Independent",
 ]
 
+[project.scripts]
+task-tracker = "tasktracker.tasktracker:main"
+
 [project.urls]
 Homepage = "https://github.com/dennisfrancis/task-tracker"
 Issues = "https://github.com/dennisfrancis/task-tracker/issues"

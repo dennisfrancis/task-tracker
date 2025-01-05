@@ -21,7 +21,7 @@ Task-tracker is a CLI offline app to track your tasks and manage your to-do list
 ## How to install?
 Task-tracker can be installed using pip like:
 ```
-pip install https://github.com/dennisfrancis/task-tracker
+pip install git+https://github.com/dennisfrancis/task-tracker.git
 ```
 **Note**: Sample usages below assume that you have installed the package using pip as shown above.
 

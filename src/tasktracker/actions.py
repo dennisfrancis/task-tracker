@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 
 from enum import Enum
-from status import Status, get_status_from_str, get_status_names
 from typing import override
-from formatting import fmt_list_of_strings
+from .status import Status, get_status_from_str, get_status_names
+from .formatting import fmt_list_of_strings
 
 program_name = 'task-tracker.py'
 

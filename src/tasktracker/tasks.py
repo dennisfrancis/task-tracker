@@ -8,8 +8,8 @@ import json
 from pathlib import Path
 from typing import override, Any, cast
 
-from actions import *
-from status import Status, status_map
+from .actions import *
+from .status import Status, status_map
 
 class Task:
     """

@@ -9,9 +9,9 @@ sys.path.append(str(source_dir))
 
 print(str(source_dir))
 
-from actions import ActionAdd, ActionDelete, ActionList, ActionMark, ActionUpdate
-from cmdline import get_action
-from status import Status
+from tasktracker.actions import ActionAdd, ActionDelete, ActionList, ActionMark, ActionUpdate
+from tasktracker.cmdline import get_action
+from tasktracker.status import Status
 
 program_name = "task-tracker.py"
 

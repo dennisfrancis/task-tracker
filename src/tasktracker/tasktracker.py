@@ -6,7 +6,7 @@ task-tracker is cli app to track and manage your tasks.
 
 __author__ = "Dennis Francis"
 __credits__ = ["Dennis Francis"]
-__license__ = "GPL"
+__license__ = "MIT"
 __version__ = "0.1.0"
 __maintainer__ = "Dennis Francis"
 __email__ = "dennisfrancis.in@gmail.com"

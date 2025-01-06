@@ -104,7 +104,7 @@ class TaskStore:
         try:
             with open(self.file, "r") as fp:
                 self._load(fp)
-        except Exception as e:
+        except Exception:
             print("[ERROR] cannot load data file {} due to possible corruption.".format(self.file))
             self.error = True
 
@@ -125,7 +125,7 @@ class TaskStore:
         try:
             with open(self.file, "w") as fp:
                 json.dump(self._store, fp, cls=TaskEncoder)
-        except Exception as e:
+        except Exception:
             print("[ERROR] cannot write to {}.".format(self.file))
             self.error = True
 
@@ -209,7 +209,7 @@ class TaskStore:
         action parameter.
         """
 
-        tasks = (task for key, task in self._store.items() if hasattr(task, "tid"))
+        tasks = (task for _, task in self._store.items() if hasattr(task, "tid"))
         if action.status != Status.UNKNOWN:
             tasks = (task for task in tasks if task.status == action.status)
         tasks = sorted(tasks)

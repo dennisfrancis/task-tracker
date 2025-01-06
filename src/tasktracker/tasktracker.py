@@ -13,8 +13,8 @@ __email__ = "dennisfrancis.in@gmail.com"
 
 
 import sys
-from .cmdline import get_action, show_usage
-from .tasks import TasksManager
+from tasktracker.cmdline import get_action, show_usage
+from tasktracker.tasks import TasksManager
 
 
 def main():

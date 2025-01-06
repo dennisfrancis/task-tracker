@@ -14,7 +14,6 @@ Task-tracker is a CLI offline app to track your tasks and manage your to-do list
 - Show list of tasks in pretty tables (without any libraries)
     - [This](https://stackoverflow.com/a/77820161) might be a good starting point.
 - Display the affected task after add/update/mark/delete execution in pretty table form.
-- Fix pyright warnings
 - Unit tests for TaskStore methods.
 - Docstrings for all classes and methods.
 - Code structure documentation in README.

@@ -6,10 +6,11 @@ import sys
 from datetime import datetime, timezone
 import json
 from pathlib import Path
-from typing import override, Any, cast
+from typing import override, Any, cast, Dict, List, Generator
 
-from .actions import *
-from .status import Status, status_map
+from tasktracker.actions import *
+from tasktracker.status import Status, status_map
+from tasktracker.tables import show_table
 
 class Task:
     """
@@ -36,6 +37,20 @@ class Task:
         if self.updated_at < other.updated_at:
             return False
         return True
+
+    def to_dict(self) -> Dict[str, str]:
+        fmt_str = "%d %b %Y %H:%M:%S"
+        return {
+                "ID" : str(self.tid),
+                "Description" : self.description,
+                "Status" : self.status.name.lower(),
+                "Updated@" : self.updated_at.astimezone().strftime(fmt_str),
+                "Created@" : self.created_at.astimezone().strftime(fmt_str) }
+
+    @staticmethod
+    def column_names() -> List[str]:
+        return [ "ID", "Description", "Status", "Updated@", "Created@" ]
+
 
 class TaskEncoder(json.JSONEncoder):
     """
@@ -203,26 +218,32 @@ class TaskStore:
         if not self.error:
             print("Deleted task with id = {}".format(action.task_id))
 
+    def _get_task_list(self, status: Status = Status.UNKNOWN) -> List[Dict[str, str]]:
+        """
+        Internal method to get a sorted list of all tasks or those with a given status.
+        """
+        tasks: Generator[Task, None, None] = (task for _, task in self._store.items() if hasattr(task, "tid"))
+        if status != Status.UNKNOWN:
+            tasks = (task for task in tasks if task.status == status)
+        tasks_sorted = sorted(tasks)
+        return [ task.to_dict() for task in tasks_sorted ]
+
     def list(self, action: ActionList):
         """
         Lists the all existing tasks or those with a status specified by the
         action parameter.
         """
 
-        tasks = (task for _, task in self._store.items() if hasattr(task, "tid"))
-        if action.status != Status.UNKNOWN:
-            tasks = (task for task in tasks if task.status == action.status)
-        tasks = sorted(tasks)
-        desc_max = 80
-        print("{} tasks:".format("All" if action.status == Status.UNKNOWN else action.status.name.capitalize()))
-        print("{:<3} | {:<80} | {:<12} | {:<20}".format("Id", "Description", "Status", "Updated at"))
-        print("{:<3}-+-{:<80}-+-{:<12}-+-{:<20}".format("-"*3, "-"*desc_max, "-"*12, "-"*20))
-        for task in tasks:
-            desc = task.description
-            if len(desc) > desc_max:
-                desc = desc[:desc_max-3] + "..."
-            print("{:<3} | {:<80} | {:<12} | {:<20}".
-                  format(task.tid, desc, task.status.name.lower(), task.updated_at.astimezone().strftime("%d %b %Y %H:%M:%S")))
+        data = self._get_task_list(action.status)
+        if len(data):
+            if action.status == Status.UNKNOWN:
+                print("\nList of all tasks:")
+            else:
+                print("\nList of {} tasks:".format(action.status.name.lower()))
+
+            show_table(data, Task.column_names(), {"Description": 60})
+        else:
+            print("There are no {}tasks.".format("" if action.status == Status.UNKNOWN else action.status.name.lower() + " "))
 
     def mark(self, action: ActionMark):
         """

@@ -13,6 +13,15 @@ _action_map = {
               "mark" : ActionMark }
 
 def get_action(args: list[str], show_help=False) -> ActionBase | None:
+    """\
+    Accepts the command-line arguments, parses them and returns the appropriate
+    Action* instance representing the user request.
+
+    Keyword arguments:
+    args: list of command-line arguments. Typically sys.args is passed.
+    show_help: If set to True shows the usage help if the arguments corresponds
+               to an invalid sub-command.
+    """
     if len(args) == 1:
         return None
     try:
@@ -28,6 +37,7 @@ def _get_action_names():
     return [action.name.lower() for action in ActionType if action != ActionType.UNKNOWN]
 
 def show_usage():
+    """Displays general command-line usage help"""
     print("\nGeneral Usage: task-tracker <action> <action-arguments...>")
     print("\nWhere action can be one of {}".format(fmt_list_of_strings(_get_action_names())))
     return

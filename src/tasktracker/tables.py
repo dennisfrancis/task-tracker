@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-"""
+"""\
 Helper functions for pretty printing list of tasks using tables.
 """
 

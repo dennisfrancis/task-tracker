@@ -1,5 +1,10 @@
 #!/usr/bin/env python
 
+"""\
+Collection of classes for representing the different actions to perform that
+correspond to each user sub-command
+"""
+
 from enum import Enum
 from typing import override
 from tasktracker.status import Status, get_status_from_str, get_status_names
@@ -8,6 +13,7 @@ from tasktracker.formatting import fmt_list_of_strings
 program_name = 'task-tracker.py'
 
 class ActionType(Enum):
+    """Represents the type of action"""
     ADD = 1
     UPDATE = 2
     DELETE = 3
@@ -16,6 +22,7 @@ class ActionType(Enum):
     UNKNOWN = 100
 
 class ActionBase:
+    """Base class of all action classes"""
     atype: ActionType = ActionType.UNKNOWN
     def __init__(self, atype: ActionType) -> None:
         self.atype = atype
@@ -24,6 +31,7 @@ class ActionBase:
         pass
 
 class ActionAdd(ActionBase):
+    """Action that corresponds to the creation of a new task"""
     task_description: str = ''
     valid = False
 
@@ -39,6 +47,7 @@ class ActionAdd(ActionBase):
         print("Subcommand usage:\n{} add <task_description>".format(program_name))
 
 class ActionUpdate(ActionBase):
+    """Action that corresponds to the updation of an existing task"""
     task_description: str = ''
     task_id: int = -1
     valid = False
@@ -60,6 +69,7 @@ class ActionUpdate(ActionBase):
 
 
 class ActionDelete(ActionBase):
+    """Action that corresponds to the deletion of an existing task"""
     task_id: int = -1
     valid = False
 
@@ -79,6 +89,7 @@ class ActionDelete(ActionBase):
 
 
 class ActionList(ActionBase):
+    """Action that corresponds to the listing of existing tasks"""
     status: Status = Status.UNKNOWN
     valid = False
 
@@ -103,6 +114,7 @@ class ActionList(ActionBase):
 
 
 class ActionMark(ActionBase):
+    """"ActionMark represent the user request to update the status of an existing task"""
     task_id: int = -1
     new_status: Status = Status.UNKNOWN
     valid = False

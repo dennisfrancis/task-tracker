@@ -184,6 +184,7 @@ class TaskStore:
         self._write()
         if not self.error:
             print("Added new task with id = {}".format(next_tid))
+            show_table([task.to_dict(),], Task.column_names(), {"Description": 60})
 
     def update(self, action: ActionUpdate):
         """
@@ -202,6 +203,7 @@ class TaskStore:
         self._write()
         if not self.error:
             print("Updated task with id = {}".format(action.task_id))
+            show_table([task.to_dict(),], Task.column_names(), {"Description": 60})
 
     def delete(self, action: ActionDelete):
         """
@@ -213,10 +215,12 @@ class TaskStore:
         if stid not in self._store:
             print("[ERROR] There is no task with task_id = {}".format(action.task_id))
             return
+        task = self._store[stid]
         del self._store[stid]
         self._write()
         if not self.error:
             print("Deleted task with id = {}".format(action.task_id))
+            show_table([task.to_dict(),], Task.column_names(), {"Description": 60})
 
     def _get_task_list(self, status: Status = Status.UNKNOWN) -> List[Dict[str, str]]:
         """
@@ -260,6 +264,7 @@ class TaskStore:
         self._write()
         if not self.error:
             print("Marked task with id = {} as {}".format(action.task_id, action.new_status.name.lower()))
+            show_table([task.to_dict(),], Task.column_names(), {"Description": 60})
 
 
 class TasksManager:

@@ -1,6 +1,8 @@
 # Task tracker
 Task-tracker is an offline CLI app to track your tasks and manage your to-do list.
 
+![List of tasks in pretty tables](images/list.png)
+
 ## Features available
 - [x] Add, update, and delete tasks
 - [x] Mark a task as in progress or done

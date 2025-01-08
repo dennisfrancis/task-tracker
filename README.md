@@ -13,7 +13,7 @@ Task-tracker is an offline CLI app to track your tasks and manage your to-do lis
 - [x] Ability to install using pip
 - [x] Tasks display inside pretty tables
 
-## Planned features
+## Future plans
 - Unit tests for TaskStore methods.
 - Code structure documentation in README.
 
@@ -74,3 +74,5 @@ python3 -m tasktracker.tasktracker list # to list tasks.
 python3 -m tasktracker.tasktracker add "Learn Typescript" # add new task.
 ```
 
+## Issues and Pull requests
+Please report issues [here](https://github.com/dennisfrancis/task-tracker/issues). As always pull requests are welcome!

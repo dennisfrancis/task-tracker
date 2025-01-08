@@ -10,7 +10,7 @@ from typing import override
 from tasktracker.status import Status, get_status_from_str, get_status_names
 from tasktracker.formatting import fmt_list_of_strings
 
-program_name = 'task-tracker.py'
+program_name = 'task-tracker'
 
 class ActionType(Enum):
     """Represents the type of action"""

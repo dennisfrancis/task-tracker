@@ -13,7 +13,7 @@ from tasktracker.actions import ActionAdd, ActionDelete, ActionList, ActionMark,
 from tasktracker.cmdline import get_action
 from tasktracker.status import Status
 
-program_name = "task-tracker.py"
+program_name = "task-tracker"
 
 class TestCmdlineParser(unittest.TestCase):
 

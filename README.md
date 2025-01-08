@@ -76,3 +76,5 @@ python3 -m tasktracker.tasktracker add "Learn Typescript" # add new task.
 
 ## Issues and Pull requests
 Please report issues [here](https://github.com/dennisfrancis/task-tracker/issues). As always pull requests are welcome!
+
+This project was made based on the specs provided in [roadmap.sh](https://roadmap.sh/projects/task-tracker).

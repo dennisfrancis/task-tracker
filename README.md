@@ -55,3 +55,20 @@ task-tracker list in_progress
 task-tracker list todo
 ```
 
+## How to run without installing?
+First, clone the repo:
+```
+git clone https://github.com/dennisfrancis/task-tracker.git
+```
+
+Go into the src subfolder inside the project root:
+```
+cd task-tracker/src/
+```
+
+Run tasktracker's main entrypoint function with sub-commands like:
+```
+python3 -m tasktracker.tasktracker list # to list tasks.
+python3 -m tasktracker.tasktracker add "Learn Typescript" # add new task.
+```
+

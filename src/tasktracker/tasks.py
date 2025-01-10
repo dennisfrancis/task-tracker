@@ -106,13 +106,14 @@ class TaskStore:
     # "next_tid" holds the value of "task id" for the next Task to be added.
     _store: dict[int | str, Any] = { "next_tid" : 1 }
 
-    def __init__(self, store_fname: str) -> None:
+    def __init__(self, store_fname: str, test_mode = False) -> None:
         """
         Builds a TaskStore instance from the given file path of the underlying
         JSON data file. If the file does not exist, it is created.
         """
 
         self.file = store_fname
+        self.test_mode = test_mode
         if not Path(self.file).is_file():
             self._write()
 
@@ -182,7 +183,7 @@ class TaskStore:
         task.updated_at = now
         self._store[task.tid] = task
         self._write()
-        if not self.error:
+        if not self.error and not self.test_mode:
             print("Added new task with id = {}".format(next_tid))
             show_table([task.to_dict(),], Task.column_names(), {"Description": 60})
 
@@ -195,13 +196,14 @@ class TaskStore:
 
         task = self._get_task(action.task_id)
         if task is None:
-            print("[ERROR] There is no task with task_id = {}".format(action.task_id))
+            if not self.test_mode:
+                print("[ERROR] There is no task with task_id = {}".format(action.task_id))
             return
         task.description = action.task_description
         now = datetime.now(tz=timezone.utc)
         task.updated_at = now
         self._write()
-        if not self.error:
+        if not self.error and not self.test_mode:
             print("Updated task with id = {}".format(action.task_id))
             show_table([task.to_dict(),], Task.column_names(), {"Description": 60})
 
@@ -213,18 +215,19 @@ class TaskStore:
 
         stid = str(action.task_id)
         if stid not in self._store:
-            print("[ERROR] There is no task with task_id = {}".format(action.task_id))
+            if not self.test_mode:
+                print("[ERROR] There is no task with task_id = {}".format(action.task_id))
             return
         task = self._store[stid]
         del self._store[stid]
         self._write()
-        if not self.error:
+        if not self.error and not self.test_mode:
             print("Deleted task with id = {}".format(action.task_id))
             show_table([task.to_dict(),], Task.column_names(), {"Description": 60})
 
-    def _get_task_list(self, status: Status = Status.UNKNOWN) -> List[Dict[str, str]]:
+    def get_task_list(self, status: Status = Status.UNKNOWN) -> List[Dict[str, str]]:
         """
-        Internal method to get a sorted list of all tasks or those with a given status.
+        Method to get a sorted list of all tasks or those with a given status.
         """
         tasks: Generator[Task, None, None] = (task for _, task in self._store.items() if hasattr(task, "tid"))
         if status != Status.UNKNOWN:
@@ -238,7 +241,7 @@ class TaskStore:
         action parameter.
         """
 
-        data = self._get_task_list(action.status)
+        data = self.get_task_list(action.status)
         if len(data):
             if action.status == Status.UNKNOWN:
                 print("\nList of all tasks:")
@@ -256,13 +259,14 @@ class TaskStore:
 
         task = self._get_task(action.task_id)
         if task is None:
-            print("[ERROR] There is no task with task_id = {}".format(action.task_id))
+            if not self.test_mode:
+                print("[ERROR] There is no task with task_id = {}".format(action.task_id))
             return
         task.status = action.new_status
         now = datetime.now(tz=timezone.utc)
         task.updated_at = now
         self._write()
-        if not self.error:
+        if not self.error and not self.test_mode:
             print("Marked task with id = {} as {}".format(action.task_id, action.new_status.name.lower()))
             show_table([task.to_dict(),], Task.column_names(), {"Description": 60})
 

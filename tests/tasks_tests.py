@@ -44,6 +44,7 @@ class TestTaskStore(unittest.TestCase):
 
     def test_store_add(self):
         task1_desc = "Task 1"
+        task2_desc = "Task 2"
         store = TaskStore(self.data_fname, test_mode = True)
         store.add(ActionAdd([task1_desc,]))
         tasks = store.get_task_list()
@@ -62,6 +63,16 @@ class TestTaskStore(unittest.TestCase):
         self.assertEqual(tasks[0]["Created@"], tasks[0]["Updated@"],
                          "Created time must be the same as updated time")
         self.assertEqual(tasks[0]["Created@"], tstamp, "Timestamp does not persist correctly")
+        store.add(ActionAdd([task2_desc,]))
+        del store
+        store = TaskStore(self.data_fname, test_mode = True)
+        tasks = store.get_task_list()
+        self.assertEqual(len(tasks), 2)
+        for task in tasks:
+            if task["ID"] == "1":
+                self.assertEqual(task["Description"], task1_desc, "Task description not preserved")
+            elif task["ID"] == "2":
+                self.assertEqual(task["Description"], task2_desc, "Task description not preserved")
 
     def test_store_delete(self):
         task1_desc = "Task 1"

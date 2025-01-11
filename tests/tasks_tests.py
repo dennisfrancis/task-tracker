@@ -120,7 +120,7 @@ class TestTaskStore(unittest.TestCase):
         self._delete_tasks([ActionDelete(["100"]),], store)
         self._add_tasks([
             ActionAdd([task1_desc,]),
-            ActionAdd([task2_desc,]),])
+            ActionAdd([task2_desc,]),], store)
 
         store = self._load_store()
         tasks = store.get_task_list()
@@ -145,6 +145,30 @@ class TestTaskStore(unittest.TestCase):
         tasks = store.get_task_list()
         self.assertEqual(len(tasks), 0)
 
+    def test_store_update(self):
+        task1_desc = "Task 1"
+        task2_desc = "Task 2"
+        task3_desc = "Task 3"
+        store = self._load_store()
+        self._add_tasks([
+            ActionAdd([task1_desc,]),
+            ActionAdd([task2_desc,]),
+            ActionAdd([task3_desc,]),], store)
+        tasks = store.get_task_list()
+        task1, task2, task3 = [ self._get_task_from_desc(desc, tasks) \
+                for desc in (task1_desc, task2_desc, task3_desc) ]
+
+        store = self._load_store()
+        store.update(ActionUpdate(["200", "XYZ"]))
+        task2_new_desc = "Task 2 updated msg"
+        store.update(ActionUpdate([task2["ID"], task2_new_desc]))
+        task2["Description"] = task2_new_desc
+
+        store = self._load_store()
+        tasks = store.get_task_list()
+        self.assertHasTask(task1, tasks)
+        self.assertHasTask(task2, tasks)
+        self.assertHasTask(task3, tasks)
 
 if __name__ == '__main__':
     unittest.main()

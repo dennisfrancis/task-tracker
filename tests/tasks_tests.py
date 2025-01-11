@@ -6,6 +6,7 @@ import unittest
 import sys
 from pathlib import Path
 from typing import List, Optional, Dict
+from time import sleep
 
 current_dir = Path(__file__).parent
 source_dir = current_dir.parent.resolve() / "src"
@@ -13,7 +14,6 @@ test_write_dir = current_dir / "write"
 sys.path.append(str(source_dir))
 
 from tasktracker.actions import ActionAdd, ActionDelete, ActionList, ActionMark, ActionUpdate
-from tasktracker.status import Status
 from tasktracker.tasks import TaskStore
 
 class TestTaskStore(unittest.TestCase):
@@ -159,10 +159,12 @@ class TestTaskStore(unittest.TestCase):
                 for desc in (task1_desc, task2_desc, task3_desc) ]
 
         store = self._load_store()
+        sleep(1)
         store.update(ActionUpdate(["200", "XYZ"]))
-        task2_new_desc = "Task 2 updated msg"
-        store.update(ActionUpdate([task2["ID"], task2_new_desc]))
-        task2["Description"] = task2_new_desc
+        task2["Description"] = "Task 2 updated msg"
+        store.update(ActionUpdate([task2["ID"], task2["Description"]]))
+        tasks = store.get_task_list()
+        task2["Updated@"] = self._get_task_from_desc(task2["Description"], tasks)["Updated@"]
 
         store = self._load_store()
         tasks = store.get_task_list()
@@ -171,7 +173,10 @@ class TestTaskStore(unittest.TestCase):
         self.assertHasTask(task3, tasks)
 
         task1["Description"] = task1["Description"] + " addendum"
+        sleep(1)
         store.update(ActionUpdate([task1["ID"], task1["Description"]]))
+        tasks = store.get_task_list()
+        task1["Updated@"] = self._get_task_from_desc(task1["Description"], tasks)["Updated@"]
 
         store = self._load_store()
         tasks = store.get_task_list()

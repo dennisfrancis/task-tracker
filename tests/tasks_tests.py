@@ -63,6 +63,37 @@ class TestTaskStore(unittest.TestCase):
                          "Created time must be the same as updated time")
         self.assertEqual(tasks[0]["Created@"], tstamp, "Timestamp does not persist correctly")
 
+    def test_store_delete(self):
+        task1_desc = "Task 1"
+        task2_desc = "Task 2"
+        store = TaskStore(self.data_fname, test_mode = True)
+        store.delete(ActionDelete(["100"]))
+        store.add(ActionAdd([task1_desc,]))
+        store.add(ActionAdd([task2_desc,]))
+        del store
+        store = TaskStore(self.data_fname, test_mode = True)
+        tasks = store.get_task_list()
+        self.assertEqual(len(tasks), 2)
+        store.delete(ActionDelete(["1"]))
+        del store
+        store = TaskStore(self.data_fname, test_mode = True)
+        tasks = store.get_task_list()
+        self.assertEqual(len(tasks), 1)
+        self.assertEqual(tasks[0]["ID"], "2")
+        self.assertEqual(tasks[0]["Description"], task2_desc)
+        store.delete(ActionDelete(["1"]))
+        del store
+        store = TaskStore(self.data_fname, test_mode = True)
+        tasks = store.get_task_list()
+        self.assertEqual(len(tasks), 1)
+        self.assertEqual(tasks[0]["ID"], "2")
+        self.assertEqual(tasks[0]["Description"], task2_desc)
+        store.delete(ActionDelete(["2"]))
+        del store
+        store = TaskStore(self.data_fname, test_mode = True)
+        tasks = store.get_task_list()
+        self.assertEqual(len(tasks), 0)
+
 
 if __name__ == '__main__':
     unittest.main()

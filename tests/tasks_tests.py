@@ -170,5 +170,15 @@ class TestTaskStore(unittest.TestCase):
         self.assertHasTask(task2, tasks)
         self.assertHasTask(task3, tasks)
 
+        task1["Description"] = task1["Description"] + " addendum"
+        store.update(ActionUpdate([task1["ID"], task1["Description"]]))
+
+        store = self._load_store()
+        tasks = store.get_task_list()
+        self.assertHasTask(task1, tasks)
+        self.assertHasTask(task2, tasks)
+        self.assertHasTask(task3, tasks)
+
+
 if __name__ == '__main__':
     unittest.main()

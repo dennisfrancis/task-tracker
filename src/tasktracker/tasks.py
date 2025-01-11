@@ -104,7 +104,7 @@ class TaskStore:
 
     # In-memory representation of list of Tasks.
     # "next_tid" holds the value of "task id" for the next Task to be added.
-    _store: dict[int | str, Any] = { "next_tid" : 1 }
+    _store: dict[str, Any] = { "next_tid" : 1 }
 
     def __init__(self, store_fname: str, test_mode = False) -> None:
         """
@@ -129,7 +129,6 @@ class TaskStore:
         Imports tasks from the JSON data file to be held in memory making use
         of the custom JSON decoder(TaskDecoder).
         """
-
         self._store = json.load(fp, cls=TaskDecoder)
 
     def _write(self):
@@ -181,7 +180,7 @@ class TaskStore:
         now = datetime.now(tz=timezone.utc)
         task.created_at = now
         task.updated_at = now
-        self._store[task.tid] = task
+        self._store[str(task.tid)] = task
         self._write()
         if not self.error and not self.test_mode:
             print("Added new task with id = {}".format(next_tid))
@@ -256,7 +255,10 @@ class TaskStore:
         """
         Changes the status of a task as specified by the action parameter and the JSON file is updated.
         """
-
+        if not action.valid:
+            if not self.test_mode:
+                print("[ERROR] Invalid mark arguments passed")
+            return
         task = self._get_task(action.task_id)
         if task is None:
             if not self.test_mode:

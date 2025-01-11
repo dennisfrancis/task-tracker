@@ -184,6 +184,35 @@ class TestTaskStore(unittest.TestCase):
         self.assertHasTask(task2, tasks)
         self.assertHasTask(task3, tasks)
 
+    def test_store_mark(self):
+        task1_desc = "Task 1"
+        task2_desc = "Task 2"
+        task3_desc = "Task 3"
+        store = self._load_store()
+        self._add_tasks([
+            ActionAdd([task1_desc,]),
+            ActionAdd([task2_desc,]),
+            ActionAdd([task3_desc,]),], store)
+        tasks = store.get_task_list()
+        task1, task2, task3 = [ self._get_task_from_desc(desc, tasks) \
+                for desc in (task1_desc, task2_desc, task3_desc) ]
+
+        sleep(1)
+        store.mark(ActionMark([task2["ID"], "done"]))
+        store.mark(ActionMark([task3["ID"], "INVALID"]))
+        store.mark(ActionMark([task1["ID"], "in_progress"]))
+        tasks = store.get_task_list()
+        task2["Status"] = "done"
+        task1["Status"] = "in_progress"
+        task1["Updated@"] = self._get_task_from_desc(task1["Description"], tasks)["Updated@"]
+        task2["Updated@"] = self._get_task_from_desc(task2["Description"], tasks)["Updated@"]
+
+        store = self._load_store()
+        tasks = store.get_task_list()
+        self.assertHasTask(task1, tasks)
+        self.assertHasTask(task2, tasks)
+        self.assertHasTask(task3, tasks)
+
 
 if __name__ == '__main__':
     unittest.main()

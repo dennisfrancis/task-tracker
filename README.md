@@ -14,9 +14,18 @@ This project has **zero** dependencies.
 - [x] Ability to install using pip
 - [x] Tasks display inside pretty tables
 
-## Future plans
-- Unit tests for TaskStore methods.
-- Code structure documentation in README.
+## Development/Code structure
+- pyproject.toml : This is needed to build the app into a python package which anyone can install using pip.
+- src : Top level directory where the app's package lives.
+  - tasktracker : This is where all the non-test source code lives.
+    - tasktracker.py : This is the main entry point of the app.
+    - cmdline.py : This module deals with parsing command line parameters passed to the app and produces various "Actions".
+    - actions.py : Here there are classes for each action namely: ActionAdd, ActionUpdate, ActionList, ActionDelete and ActionMark.
+    - status.py : This module defines the different statuses/states of each task namely `todo`, `in_progress`, `done`.
+    - formatting.py : Utility functions related to string formatting goes here.
+    - tasks.py : Contains classes for task management ie. the execution of different actions and for tasks persistence.
+    - tables.py : This module renders pretty tables for listing tasks data.
+- tests : Unit tests for actions and task management/storage lives here.
 
 ## How to install?
 Task-tracker can be installed using pip like:

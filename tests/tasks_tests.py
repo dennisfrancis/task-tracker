@@ -5,6 +5,7 @@
 import unittest
 import sys
 from pathlib import Path
+from typing import List, Optional, Dict
 
 current_dir = Path(__file__).parent
 source_dir = current_dir.parent.resolve() / "src"
@@ -33,75 +34,114 @@ class TestTaskStore(unittest.TestCase):
                 self.data_file.unlink()
             self.tmpdir.rmdir()
 
+    def _load_store(self):
+        return TaskStore(self.data_fname, test_mode = True)
+
+    def _add_tasks(self, actions: List[ActionAdd], store: Optional[TaskStore] = None) -> TaskStore:
+        if store is None:
+            store = self._load_store()
+        for action in actions:
+            store.add(action)
+        return store
+
+    def _delete_tasks(self, actions: List[ActionDelete], store: Optional[TaskStore] = None) -> TaskStore:
+        if store is None:
+            store = self._load_store()
+        for action in actions:
+            store.delete(action)
+        return store
+
+    def _get_task_from_desc(self, task_desc: str, tasks: List[Dict[str, str]]) -> Dict[str, str]:
+        found = False
+        for task in tasks:
+            if task["Description"] == task_desc:
+                found = True
+                return task.copy()
+        self.assertTrue(found, "Cannot find a task with description='{}'".format(task_desc))
+        return {}
+
+    def assertTasksEqual(self, task_actual: Dict[str, str], task_expected: Dict[str, str], msg: str = ""):
+        keyset = set(task_actual.keys()) & set(task_expected.keys())
+        for key in keyset:
+            self.assertEqual(task_actual[key], task_expected[key],
+                             msg + "\nTask with Description='{}' has unexpected value for key={}". \
+                                     format(task_actual["Description"], key))
+
+
+    def assertHasTask(self, task_dict: Dict[str, str], tasks: List[Dict[str, str]]):
+        found = False
+        for task in tasks:
+            if task["ID"] == task_dict["ID"]:
+                self.assertTasksEqual(task, task_dict)
+                found = True
+                break
+        self.assertTrue(found, "Task with ID={} not found".format(task_dict["ID"]))
+
     def test_setup_is_correct(self):
         self.assertTrue(self.tmpdir.is_dir())
         self.assertTrue(not Path(self.data_fname).is_file())
 
     def test_store_check_empty(self):
-        store = TaskStore(self.data_fname, test_mode = True)
+        store = self._load_store()
         tasks = store.get_task_list()
         self.assertEqual(len(tasks), 0, "Store should be empty at the beginning")
 
     def test_store_add(self):
         task1_desc = "Task 1"
         task2_desc = "Task 2"
-        store = TaskStore(self.data_fname, test_mode = True)
-        store.add(ActionAdd([task1_desc,]))
+        store = self._add_tasks([ActionAdd([task1_desc,])])
         tasks = store.get_task_list()
 
-        self.assertEqual(len(tasks), 1, "There must be exactly one task after addition")
-        self.assertEqual(tasks[0]["Description"], task1_desc, "Task description not preserved")
-        self.assertEqual(tasks[0]["Created@"], tasks[0]["Updated@"],
-                         "Created time must be the same as updated time")
-        tstamp = tasks[0]["Created@"]
-        del store
-        store = TaskStore(self.data_fname, test_mode = True)
-        tasks = store.get_task_list()
+        self.assertEqual(len(tasks), 1, "There must be exactly one task after first addition")
+        task1_expected = self._get_task_from_desc(task1_desc, tasks)
+        self.assertEqual(task1_expected["Updated@"], task1_expected["Created@"],
+                         "Updated@ must match Created@ for a brand new task")
 
-        self.assertEqual(len(tasks), 1, "There must be exactly one task after addition")
-        self.assertEqual(tasks[0]["Description"], task1_desc, "Task description not preserved")
-        self.assertEqual(tasks[0]["Created@"], tasks[0]["Updated@"],
-                         "Created time must be the same as updated time")
-        self.assertEqual(tasks[0]["Created@"], tstamp, "Timestamp does not persist correctly")
-        store.add(ActionAdd([task2_desc,]))
-        del store
-        store = TaskStore(self.data_fname, test_mode = True)
+        store = self._load_store()
+        tasks = store.get_task_list()
+        self.assertEqual(len(tasks), 1, "There must be exactly one task after first addition")
+        self.assertHasTask(task1_expected, tasks)
+
+        self._add_tasks([ActionAdd([task2_desc,])], store)
+        task2_expected = self._get_task_from_desc(task2_desc, store.get_task_list())
+        self.assertEqual(task2_expected["Updated@"], task2_expected["Created@"],
+                         "Updated@ must match Created@ for a brand new task")
+
+        store = self._load_store()
         tasks = store.get_task_list()
         self.assertEqual(len(tasks), 2)
-        for task in tasks:
-            if task["ID"] == "1":
-                self.assertEqual(task["Description"], task1_desc, "Task description not preserved")
-            elif task["ID"] == "2":
-                self.assertEqual(task["Description"], task2_desc, "Task description not preserved")
+        self.assertHasTask(task1_expected, tasks)
+        self.assertHasTask(task2_expected, tasks)
 
     def test_store_delete(self):
         task1_desc = "Task 1"
         task2_desc = "Task 2"
-        store = TaskStore(self.data_fname, test_mode = True)
-        store.delete(ActionDelete(["100"]))
-        store.add(ActionAdd([task1_desc,]))
-        store.add(ActionAdd([task2_desc,]))
-        del store
-        store = TaskStore(self.data_fname, test_mode = True)
+        store = self._load_store()
+        self._delete_tasks([ActionDelete(["100"]),], store)
+        self._add_tasks([
+            ActionAdd([task1_desc,]),
+            ActionAdd([task2_desc,]),])
+
+        store = self._load_store()
         tasks = store.get_task_list()
+        task1= self._get_task_from_desc(task1_desc, tasks)
+        task2 = self._get_task_from_desc(task2_desc, tasks)
         self.assertEqual(len(tasks), 2)
-        store.delete(ActionDelete(["1"]))
-        del store
-        store = TaskStore(self.data_fname, test_mode = True)
+        store.delete(ActionDelete([task1["ID"],]))
+
+        store = self._load_store()
         tasks = store.get_task_list()
         self.assertEqual(len(tasks), 1)
-        self.assertEqual(tasks[0]["ID"], "2")
-        self.assertEqual(tasks[0]["Description"], task2_desc)
-        store.delete(ActionDelete(["1"]))
+        self.assertTasksEqual(tasks[0], task2)
+        store.delete(ActionDelete([task1["ID"],]))
         del store
-        store = TaskStore(self.data_fname, test_mode = True)
+        store = self._load_store()
         tasks = store.get_task_list()
         self.assertEqual(len(tasks), 1)
-        self.assertEqual(tasks[0]["ID"], "2")
-        self.assertEqual(tasks[0]["Description"], task2_desc)
-        store.delete(ActionDelete(["2"]))
-        del store
-        store = TaskStore(self.data_fname, test_mode = True)
+        self.assertTasksEqual(tasks[0], task2)
+        store.delete(ActionDelete([task2["ID"],]))
+
+        store = self._load_store()
         tasks = store.get_task_list()
         self.assertEqual(len(tasks), 0)
 

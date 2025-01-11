@@ -8,9 +8,12 @@ import json
 from pathlib import Path
 from typing import override, Any, cast, Dict, List, Generator
 
-from tasktracker.actions import *
+from tasktracker.actions import ActionAdd, ActionUpdate
+from tasktracker.actions import ActionBase, ActionDelete
+from tasktracker.actions import ActionMark, ActionList, ActionType
 from tasktracker.status import Status, status_map
 from tasktracker.tables import show_table
+
 
 class Task:
     """
@@ -41,15 +44,15 @@ class Task:
     def to_dict(self) -> Dict[str, str]:
         fmt_str = "%d %b %Y %H:%M:%S"
         return {
-                "ID" : str(self.tid),
-                "Description" : self.description,
-                "Status" : self.status.name.lower(),
-                "Updated@" : self.updated_at.astimezone().strftime(fmt_str),
-                "Created@" : self.created_at.astimezone().strftime(fmt_str) }
+                "ID": str(self.tid),
+                "Description": self.description,
+                "Status": self.status.name.lower(),
+                "Updated@": self.updated_at.astimezone().strftime(fmt_str),
+                "Created@": self.created_at.astimezone().strftime(fmt_str)}
 
     @staticmethod
     def column_names() -> List[str]:
-        return [ "ID", "Description", "Status", "Updated@", "Created@" ]
+        return ["ID", "Description", "Status", "Updated@", "Created@"]
 
 
 class TaskEncoder(json.JSONEncoder):
@@ -65,11 +68,12 @@ class TaskEncoder(json.JSONEncoder):
             return super().default(o)
         return {
                 "__class__": "Task",
-                "tid" : o.tid,
-                "description" : o.description,
-                "status" : o.status.name.lower(),
-                "created_at" : str(o.created_at.timestamp()),
-                "updated_at": str(o.updated_at.timestamp()) }
+                "tid": o.tid,
+                "description": o.description,
+                "status": o.status.name.lower(),
+                "created_at": str(o.created_at.timestamp()),
+                "updated_at": str(o.updated_at.timestamp())}
+
 
 class TaskDecoder(json.JSONDecoder):
     """
@@ -88,9 +92,12 @@ class TaskDecoder(json.JSONDecoder):
         task.tid = int(d["tid"])
         task.description = d["description"]
         task.status = status_map[d["status"]]
-        task.created_at = datetime.fromtimestamp(float(d["created_at"]), tz=timezone.utc)
-        task.updated_at = datetime.fromtimestamp(float(d["updated_at"]), tz=timezone.utc)
+        task.created_at = datetime.fromtimestamp(
+                float(d["created_at"]), tz=timezone.utc)
+        task.updated_at = datetime.fromtimestamp(
+                float(d["updated_at"]), tz=timezone.utc)
         return task
+
 
 class TaskStore:
     """
@@ -100,13 +107,13 @@ class TaskStore:
     tasks or those with of a specific status.
     """
 
-    error = False #  To indicate one or more errors occured.
+    error = False  # To indicate one or more errors occured.
 
     # In-memory representation of list of Tasks.
     # "next_tid" holds the value of "task id" for the next Task to be added.
-    _store: dict[str, Any] = { "next_tid" : 1 }
+    _store: dict[str, Any] = {"next_tid": 1}
 
-    def __init__(self, store_fname: str, test_mode = False) -> None:
+    def __init__(self, store_fname: str, test_mode=False) -> None:
         """
         Builds a TaskStore instance from the given file path of the underlying
         JSON data file. If the file does not exist, it is created.
@@ -121,7 +128,8 @@ class TaskStore:
             with open(self.file, "r") as fp:
                 self._load(fp)
         except Exception:
-            print("[ERROR] cannot load data file {} due to possible corruption.".format(self.file))
+            print("[ERROR] cannot load data file {}"
+                  " due to possible corruption.".format(self.file))
             self.error = True
 
     def _load(self, fp):
@@ -184,7 +192,8 @@ class TaskStore:
         self._write()
         if not self.error and not self.test_mode:
             print("Added new task with id = {}".format(next_tid))
-            show_table([task.to_dict(),], Task.column_names(), {"Description": 60})
+            show_table([task.to_dict(),], Task.column_names(),
+                       {"Description": 60})
 
     def update(self, action: ActionUpdate):
         """
@@ -196,7 +205,8 @@ class TaskStore:
         task = self._get_task(action.task_id)
         if task is None:
             if not self.test_mode:
-                print("[ERROR] There is no task with task_id = {}".format(action.task_id))
+                print("[ERROR] There is no task with task_id = {}".
+                      format(action.task_id))
             return
         task.description = action.task_description
         now = datetime.now(tz=timezone.utc)
@@ -204,7 +214,8 @@ class TaskStore:
         self._write()
         if not self.error and not self.test_mode:
             print("Updated task with id = {}".format(action.task_id))
-            show_table([task.to_dict(),], Task.column_names(), {"Description": 60})
+            show_table([task.to_dict(),], Task.column_names(),
+                       {"Description": 60})
 
     def delete(self, action: ActionDelete):
         """
@@ -215,24 +226,29 @@ class TaskStore:
         stid = str(action.task_id)
         if stid not in self._store:
             if not self.test_mode:
-                print("[ERROR] There is no task with task_id = {}".format(action.task_id))
+                print("[ERROR] There is no task with task_id = {}".
+                      format(action.task_id))
             return
         task = self._store[stid]
         del self._store[stid]
         self._write()
         if not self.error and not self.test_mode:
             print("Deleted task with id = {}".format(action.task_id))
-            show_table([task.to_dict(),], Task.column_names(), {"Description": 60})
+            show_table([task.to_dict(),], Task.column_names(),
+                       {"Description": 60})
 
-    def get_task_list(self, status: Status = Status.UNKNOWN) -> List[Dict[str, str]]:
+    def get_task_list(self, status: Status = Status.UNKNOWN) \
+            -> List[Dict[str, str]]:
         """
         Method to get a sorted list of all tasks or those with a given status.
         """
-        tasks: Generator[Task, None, None] = (task for _, task in self._store.items() if hasattr(task, "tid"))
+        tasks: Generator[Task, None, None] = (task for _, task
+                                              in self._store.items()
+                                              if hasattr(task, "tid"))
         if status != Status.UNKNOWN:
             tasks = (task for task in tasks if task.status == status)
         tasks_sorted = sorted(tasks)
-        return [ task.to_dict() for task in tasks_sorted ]
+        return [task.to_dict() for task in tasks_sorted]
 
     def list(self, action: ActionList):
         """
@@ -249,11 +265,14 @@ class TaskStore:
 
             show_table(data, Task.column_names(), {"Description": 60})
         else:
-            print("There are no {}tasks.".format("" if action.status == Status.UNKNOWN else action.status.name.lower() + " "))
+            print("There are no {}tasks.".
+                  format("" if action.status == Status.UNKNOWN
+                         else action.status.name.lower() + " "))
 
     def mark(self, action: ActionMark):
         """
-        Changes the status of a task as specified by the action parameter and the JSON file is updated.
+        Changes the status of a task as specified by the action parameter and
+        the JSON file is updated.
         """
         if not action.valid:
             if not self.test_mode:
@@ -262,15 +281,18 @@ class TaskStore:
         task = self._get_task(action.task_id)
         if task is None:
             if not self.test_mode:
-                print("[ERROR] There is no task with task_id = {}".format(action.task_id))
+                print("[ERROR] There is no task with task_id = {}".
+                      format(action.task_id))
             return
         task.status = action.new_status
         now = datetime.now(tz=timezone.utc)
         task.updated_at = now
         self._write()
         if not self.error and not self.test_mode:
-            print("Marked task with id = {} as {}".format(action.task_id, action.new_status.name.lower()))
-            show_table([task.to_dict(),], Task.column_names(), {"Description": 60})
+            print("Marked task with id = {} as {}".
+                  format(action.task_id, action.new_status.name.lower()))
+            show_table([task.to_dict(),], Task.column_names(),
+                       {"Description": 60})
 
 
 class TasksManager:
@@ -278,9 +300,10 @@ class TasksManager:
     Executes the sub-commands from CLI by forwarding the actions to TaskStore
     API.
     """
+    # To store the error status of one of the store or file operations.
+    error = False
 
-    error = False # To store the error status of one of the store or file operations.
-    def __init__(self, data_fname : str | None = None) -> None:
+    def __init__(self, data_fname: str | None = None) -> None:
         """
         Creates an instance of TaskStore from the default or specified JSON
         file.
@@ -289,7 +312,7 @@ class TasksManager:
         if data_fname is None:
             try:
                 self.file = self._default_data_fname()
-            except:
+            except Exception:
                 print("[ERROR] Cannot create default data directory!")
                 self.error = True
                 return
@@ -351,4 +374,3 @@ class TasksManager:
             self.store.list(cast(ActionList, action))
         elif action.atype == ActionType.MARK:
             self.store.mark(cast(ActionMark, action))
-
